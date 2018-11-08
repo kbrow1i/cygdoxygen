@@ -1,0 +1,76 @@
+# doxygen.cygport
+inherit qt4-cmake
+NAME="doxygen"
+VERSION=1.8.14
+RELEASE=2
+SUMMARY="A documentation system for several programming languages"
+DESCRIPTION="Doxygen is a documentation system for C++, C, Java, Objective-C, IDL (Corba and Microsoft flavours) and to some extent PHP, C#, and D."
+CATEGORY="Devel"
+
+DEPEND="libQtCore4-devel libxapian-devel libclang-devel clang libllvm-devel-static texlive-collection-fontutils"
+
+PKG_NAMES="doxygen doxygen-doxywizard"
+
+doxygen_SUMMARY="${SUMMARY}"
+doxygen_DESCRIPTION="${DESCRIPTION}"
+doxygen_CATEGORY="Devel"
+doxygen_CONTENTS="usr/share/doc"
+for prog_name in doxygen doxyindexer doxysearch.cgi
+do
+	doxygen_CONTENTS+=" usr/bin/${prog_name}.exe"
+	doxygen_CONTENTS+=" usr/share/man/man1/${prog_name/.cgi/}.1.gz"
+done
+
+doxygen_doxywizard_SUMMARY="A graphical front-end to doxygen"
+doxygen_doxywizard_DESCRIPTION="Doxywizard is a graphical front-end to read/edit/write doxygen configuration files and to launch doxygen."
+doxygen_doxywizard_CATEGORY="Devel"
+doxygen_doxywizard_REQUIRES="doxygen"
+doxygen_doxywizard_CONTENTS='usr/bin/doxywizard.exe usr/share/man/man1/doxywizard.1.gz usr/share/applications usr/share/pixmaps'
+
+HOMEPAGE="http://www.doxygen.org/"
+SRC_URI="http://ftp.stack.nl/pub/users/dimitri/${P}.src.tar.gz
+http://pkgs.fedoraproject.org/repo/pkgs/doxygen/doxywizard.png/1a84da877450422c5fc49e525c546cd4/doxywizard.png"
+
+CYGCMAKE_ARGS="
+	-Dbuild_wizard=ON
+	-Dbuild_doc=ON
+	-Dbuild_xmlparser=ON
+	-Dbuild_search=ON
+	-Duse_libclang=ON
+	-DCMAKE_VERBOSE_MAKEFILE=ON
+	-DDOC_INSTALL_DIR=/share/doc/doxygen
+"
+# Doxygen fails to compile under 64-bit Cygwin if it is built with
+# debugging symbols and optimization (the assembler generates the
+# error 'too many sections').
+if [ "${ARCH}" == "x86_64" ]
+then
+    RESTRICT="debuginfo"
+    CYGCMAKE_ARGS+=" -DCMAKE_BUILD_TYPE=Release"
+    CFLAGS="-pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4"
+    CXXFLAGS="${CFLAGS}"
+else
+    CYGCMAKE_ARGS+=" -DCMAKE_BUILD_TYPE=RelWithDebInfo"
+fi
+CFLAGS+=" -D_DEFAULT_SOURCE"	# For strdup(3) and killpg(2)
+CXXFLAGS+=" -D_DEFAULT_SOURCE"
+
+src_compile() {
+	cd "${B}"
+	qt4_cmake_compile
+	make docs
+}
+
+src_install() {
+	cd "${B}"
+	cyginstall
+
+	# Add a desktop menu entry.
+	newicon "${S}/doxywizard.png" doxywizard.png
+	make_desktop_entry doxywizard "Doxygen Wizard" doxywizard "Development"
+}
+
+src_test() {
+	cd "${B}"
+	make tests
+}

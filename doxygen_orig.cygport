@@ -1,0 +1,116 @@
+# doxygen.cygport
+inherit qt4-cmake
+NAME="doxygen"
+VERSION=1.8.14
+RELEASE=2
+SUMMARY="A documentation system for C++, C, Java, Objective-C, IDL (Corba and Microsoft flavours) and to some extent PHP, C#, and D"
+DESCRIPTION="Doxygen is a documentation system for C++, C, Java, Objective-C, IDL (Corba and Microsoft flavours) and to some extent PHP, C#, and D."
+CATEGORY="Devel"
+
+#############################################################################
+# This cygport file produces two packages, the main 'doxygen' package and
+# 'doxygen-doxywizard' containing the GUI. The naming convention is borrowed
+# from the Fedora packages, but is consistent with other Cygwin packages,
+# e.g. subversion.
+PKG_NAMES="doxygen doxygen-doxywizard"
+#############################################################################
+
+
+#############################################################################
+# The main 'doxygen' package contains the main executable, its man page and
+# the documentation in HTML and PDF formats.
+doxygen_SUMMARY="${SUMMARY}"
+doxygen_DESCRIPTION="${DESCRIPTION}"
+doxygen_CATEGORY="Devel"
+doxygen_CONTENTS="usr/share/doc"
+for prog_name in doxygen doxyindexer doxysearch.cgi
+do
+	doxygen_CONTENTS+=" usr/bin/${prog_name}.exe"
+	doxygen_CONTENTS+=" usr/share/man/man1/${prog_name/.cgi/}.1.gz"
+done
+#############################################################################
+
+
+#############################################################################
+# The 'doxygen-doxywizard' package contains only the doxywizard executable
+# and its man page.
+doxygen_doxywizard_SUMMARY="Doxywizard is a graphical front-end to read/edit/write doxygen configuration files and to launch doxygen"
+doxygen_doxywizard_DESCRIPTION="Doxywizard is a graphical front-end to read/edit/write doxygen configuration files and to launch doxygen."
+doxygen_doxywizard_CATEGORY="Devel"
+doxygen_doxywizard_REQUIRES="doxygen"
+doxygen_doxywizard_CONTENTS='usr/bin/doxywizard.exe usr/share/man/man1/doxywizard.1.gz usr/share/applications usr/share/pixmaps'
+#############################################################################
+
+
+HOMEPAGE="http://www.doxygen.org/"
+SRC_URI="http://ftp.stack.nl/pub/users/dimitri/${P}.src.tar.gz
+http://pkgs.fedoraproject.org/repo/pkgs/doxygen/doxywizard.png/1a84da877450422c5fc49e525c546cd4/doxywizard.png"
+SRC_DIR="${NAME}-${VERSION}"
+
+src_compile() {
+	# Starting with version 1.8.5, doxygen can store data gathered in a
+	# sqlite3 database. This is an experimental feature and so is
+	# disabled here. If you wish to enable this feature then set the
+	# 'use_sqlite' variable to "ON".
+	local use_sqlite="OFF"
+	# if [ -f /usr/include/sqlite3.h ]; then
+	#   use_sqlite="ON"
+	# fi
+
+	# If clang is present then enable clang-assisted parsing.
+	local use_libclang="OFF"
+	if [ -f /usr/include/clang-c/index.h ]; then
+		use_libclang="ON"
+	fi
+
+	# 'doxyindexer' and 'doxysearch' require libxapian-devel.
+	local build_search="OFF"
+	if [ -f /usr/include/xapian.h ]; then
+		build_search="ON"
+	fi
+
+	# Doxygen fails to compile under 64-bit Cygwin if the cygport values
+	# of CFLAGS and CXXFLAGS are passed through (the assembler generates
+	# the error 'too many sections'). This means that we don't generate a
+	# debuginfo package for 64-bit builds. The error is not given if -O0
+	# is used (i.e. disable compiler optimisation), but an optimised
+	# build is probably more important than a debuginfo package.
+	local build_type="RelWithDebInfo"
+	if [ "$(uname -m)" == "x86_64" ]; then
+		CFLAGS="-pipe -fsigned-char -D_LARGEFILE_SOURCE -Wall -W"
+		CXXFLAGS="${CFLAGS}"
+		build_type="Release"
+	fi
+
+	# Ensure that strdup(3) and killpg(2) are visible.
+	CFLAGS+=" -D_XOPEN_SOURCE=500"
+	CXXFLAGS+=" -D_XOPEN_SOURCE=500"
+
+	cd "${B}"
+	qt4_cmake_compile                         \
+		-Dbuild_wizard=ON                 \
+		-Dbuild_doc=ON                    \
+		-Dbuild_xmlparser=ON              \
+		-Dbuild_search=${build_search}    \
+		-Duse_sqlite3=${use_sqlite}       \
+		-Duse_libclang=${use_libclang}    \
+		-DCMAKE_BUILD_TYPE=${build_type}  \
+		-DCMAKE_VERBOSE_MAKEFILE=ON       \
+		-DDOC_INSTALL_DIR="/share/doc/doxygen"
+
+	make docs
+}
+
+src_install() {
+	cd "${B}"
+	cyginstall
+
+	# Add a desktop menu entry.
+	newicon "${S}/doxywizard.png" doxywizard.png
+	make_desktop_entry doxywizard "Doxygen Wizard" doxywizard "Development"
+}
+
+src_test() {
+	cd "${B}"
+	make tests
+}
