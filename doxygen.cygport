@@ -1,26 +1,24 @@
-# doxygen.cygport
-inherit qt4-cmake
 NAME="doxygen"
-VERSION=1.8.14
-RELEASE=3
+VERSION=1.8.15
+RELEASE=0.1
+
+HOMEPAGE="http://www.doxygen.org/"
+
+GIT_URI="https://github.com/doxygen/doxygen.git"
+inherit qt4-cmake git
+
+# SRC_URI="http://ftp.stack.nl/pub/users/dimitri/${P}.src.tar.gz"
+SRC_URI+=" http://pkgs.fedoraproject.org/repo/pkgs/doxygen/doxywizard.png/1a84da877450422c5fc49e525c546cd4/doxywizard.png"
+
 SUMMARY="A documentation system for C++ and other languages"
-DESCRIPTION="Doxygen is a documentation system for C++, C, Java, Objective-C, IDL (Corba and Microsoft flavours) and to some extent PHP, C#, and D."
+DESCRIPTION="Doxygen is a documentation system for C++, C, Java, Objective-C, IDL
+(Corba and Microsoft flavours) and to some extent PHP, C#, and D."
 CATEGORY="Devel"
 
 DEPEND="libQtCore4-devel libxapian-devel libclang-devel clang libllvm-devel-static texlive-collection-fontutils"
 
-#############################################################################
-# This cygport file produces two packages, the main 'doxygen' package and
-# 'doxygen-doxywizard' containing the GUI. The naming convention is borrowed
-# from the Fedora packages, but is consistent with other Cygwin packages,
-# e.g. subversion.
 PKG_NAMES="doxygen doxygen-doxywizard"
-#############################################################################
 
-
-#############################################################################
-# The main 'doxygen' package contains the main executable, its man page and
-# the documentation in HTML and PDF formats.
 doxygen_SUMMARY="${SUMMARY}"
 doxygen_DESCRIPTION="${DESCRIPTION}"
 doxygen_CATEGORY="Devel"
@@ -30,23 +28,12 @@ do
 	doxygen_CONTENTS+=" usr/bin/${prog_name}.exe"
 	doxygen_CONTENTS+=" usr/share/man/man1/${prog_name/.cgi/}.1.gz"
 done
-#############################################################################
 
-
-#############################################################################
-# The 'doxygen-doxywizard' package contains only the doxywizard executable
-# and its man page.
 doxygen_doxywizard_SUMMARY="Doxywizard is a graphical front-end to read/edit/write doxygen configuration files and to launch doxygen"
 doxygen_doxywizard_DESCRIPTION="Doxywizard is a graphical front-end to read/edit/write doxygen configuration files and to launch doxygen."
 doxygen_doxywizard_CATEGORY="Devel"
 doxygen_doxywizard_REQUIRES="doxygen"
 doxygen_doxywizard_CONTENTS='usr/bin/doxywizard.exe usr/share/man/man1/doxywizard.1.gz usr/share/applications usr/share/pixmaps'
-#############################################################################
-
-
-HOMEPAGE="http://www.doxygen.org/"
-SRC_URI="http://ftp.stack.nl/pub/users/dimitri/${P}.src.tar.gz
-http://pkgs.fedoraproject.org/repo/pkgs/doxygen/doxywizard.png/1a84da877450422c5fc49e525c546cd4/doxywizard.png"
 
 src_compile() {
 	# Starting with version 1.8.5, doxygen can store data gathered in a
@@ -54,9 +41,6 @@ src_compile() {
 	# disabled here. If you wish to enable this feature then set the
 	# 'use_sqlite' variable to "ON".
 	local use_sqlite="OFF"
-	# if [ -f /usr/include/sqlite3.h ]; then
-	#   use_sqlite="ON"
-	# fi
 
 	# Enable clang-assisted parsing.
 	local use_libclang="ON"
