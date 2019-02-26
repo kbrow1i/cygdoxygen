@@ -1,14 +1,21 @@
 NAME="doxygen"
 VERSION=1.8.15
-RELEASE=0.1
+RELEASE=1
 
-HOMEPAGE="http://www.doxygen.org/"
+HOMEPAGE="http://www.doxygen.nl"
 
-GIT_URI="https://github.com/doxygen/doxygen.git"
-inherit qt4-cmake git
+# GIT_URI="https://github.com/doxygen/doxygen.git"
+# inherit qt4-cmake git
+inherit qt4-cmake
 
-# SRC_URI="http://ftp.stack.nl/pub/users/dimitri/${P}.src.tar.gz"
+SRC_URI="${HOMEPAGE}/files/${P}.src.tar.gz"
 SRC_URI+=" http://pkgs.fedoraproject.org/repo/pkgs/doxygen/doxywizard.png/1a84da877450422c5fc49e525c546cd4/doxywizard.png"
+
+PATCH_URI+=" http://pkgs.fedoraproject.org/cgit/rpms/doxygen.git/plain/doxygen-1.8.15-handle_empty_TOC_in_XML_output.patch"
+PATCH_URI+=" http://pkgs.fedoraproject.org/cgit/rpms/doxygen.git/plain/doxygen-1.8.15-test_for_XML_output_with_an_empty_TOC.patch"
+PATCH_URI+=" http://pkgs.fedoraproject.org/cgit/rpms/doxygen.git/plain/doxygen-1.8.15-inconsistent_whitespace_removal_for_operators.patch"
+PATCH_URI+=" http://pkgs.fedoraproject.org/cgit/rpms/doxygen.git/plain/doxygen-1.8.15-crash.patch"
+PATCH_URI+=" http://pkgs.fedoraproject.org/cgit/rpms/doxygen.git/plain/doxygen-1.8.15-multilib.patch"
 
 SUMMARY="A documentation system for C++ and other languages"
 DESCRIPTION="Doxygen is a documentation system for C++, C, Java, Objective-C, IDL
